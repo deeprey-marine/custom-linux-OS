@@ -13,3 +13,14 @@ Refer preceed config in [https://www.debian.org/releases/stable/armel/apb.en.htm
 | 2 | Live OS build steps | Live boot capable ISO with squashfs building steps and script | [live-os-build](live-os-build) |
 
 
+#### OpenGL verification keystrokes & Power operations
+Use folowing keystrokes to verify OpenGL functionalities & manage power operations.
+
+| Keystroke | Function |
+| --- | --- |
+| ALT+CTRL+K | Launch `glxgears` |
+| ALT+CTRL+L | Kill `glxgears` |
+| ALT+CTRL+M | Launch `glxinfo` in a `xterm` window |
+| ALT+CTRL+L | Kill `glxinfo` and `xterm` |
+| ALT+CTRL+U | System shutdown  |
+| ALT+CTRL+R | System reboot |

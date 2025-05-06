@@ -18,7 +18,9 @@ apt install -y chromium openbox xbindkeys xdotool unclutter xorg xinit evtest py
  fonts-noto fonts-noto-extra fonts-noto-cjk fonts-noto-ui-core fonts-noto-ui-extra curl wget sudo vim jq rsyslog net-tools xterm yad wget \
  live-build squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin isolinux syslinux-common grub-common grub-efi \
  debian-installer debian-installer-launcher cdebconf chrony overlayroot xvfb \
- git make gcc libevdev-dev 
+ git make gcc libevdev-dev \
+ xdotool wmctrl \
+ mesa-utils mesa-utils-extra libgl1-mesa-dri libgl1-mesa-glx libglu1-mesa
 ```
 
 Remova packages using,
@@ -148,7 +150,9 @@ chown user:user /home/user/.config/
 
 ### keyd installation and configurations
 `keyd` is usually not in Debian repositories, so clone it from [https://github.com/rvaiya/keyd](https://github.com/rvaiya/keyd) and build it.
-This will be implement keystroke blockages. 
+
+This will be implement keystroke blockages and run applications/commands based on key strokes
+
 ```bash
 # Download keyd source
 cd /usr/local/src
@@ -165,12 +169,6 @@ cat <<EOF > /etc/keyd/default.conf
 [ids]
 *
 
-# Normal typing
-[main]
-w = w
-o = o
-p = p
-
 # Control and Alt Layers
 [main]
 leftcontrol = layer(control)
@@ -186,7 +184,14 @@ q = q
 q = q
 w = w
 
-# Do NOT block tab here, leave it free
+# Launch and kill apps 
+[control+alt]
+l = command(/usr/bin/pkill glxgears)
+k = command(sudo -u user DISPLAY=:0 /usr/bin/glxgears -fullscreen -info &)
+n = command(/usr/bin/pkill xterm)
+m = command(sudo -u user DISPLAY=:0 xterm -e "/usr/bin/glxinfo | more" &)
+r = command(init 6)
+u = command(init 0)
 
 # Alt Layer
 [alt:A]
@@ -200,6 +205,29 @@ Enable keyd service on boot using,
 ```bash
 systemctl enable keyd;
 ```
+
+#### OpenGL verification keystrokes
+Following are the OpenGL functionality verification & manage power operations keystrokes  manage by `keyd`
+
+| Keystroke | Function |
+| --- | --- |
+| ALT+CTRL+K | Launch `glxgears` |
+| ALT+CTRL+L | Kill `glxgears` |
+| ALT+CTRL+M | Launch `glxinfo` in a `xterm` window |
+| ALT+CTRL+L | Kill `glxinfo` and `xterm` |
+| ALT+CTRL+U | System shutdown  |
+| ALT+CTRL+R | System reboot |
+
+
+#### Key stroke blockage
+Following key strokes have been blocked / neutralized
+| Keystroke | Function |
+| --- | --- |
+| ALT+F4 | Window/App close |
+| ALT+Tab | Window/App switch |
+| CTRL+W | Common closure  keystroke |
+| CTRL+W | Common closure  keystroke |
+
 
 
 ### Display configuration
@@ -399,37 +427,6 @@ systemctl stop ModemManager
 ```
 
 
-
-
-## Hardening
-
-Harden the OS with following steps.
-
-Create a disabled command script using,
-```bash
-echo -e '#!/bin/bash\necho "This command is disabled."' | sudo tee /usr/local/bin/disabled-command >/dev/null
-sudo chmod +x /usr/local/bin/disabled-command
-```
-
-### Disable package related commands
-Disable using,
-```bash
-sudo mv /usr/bin/apt /usr/bin/apt.bak
-sudo ln -s /usr/local/bin/disabled-command /usr/bin/apt
-
-sudo mv /usr/bin/apt-get /usr/bin/apt-get.bak
-sudo ln -s /usr/local/bin/disabled-command /usr/bin/apt-get
-
-sudo mv /usr/bin/dpkg /usr/bin/dpkg.bak
-sudo ln -s /usr/local/bin/disabled-command /usr/bin/dpkg
-```
-
-### Disable xterm
-Disable using,
-```bash
-sudo mv /usr/bin/xterm /usr/bin/xterm.bak
-sudo ln -s /usr/local/bin/disabled-command /usr/bin/xterm
-```
 
 ## Overlaying filesystem
 Since Live ISO is not intended to be installed Overlaying filesystem is not getting applied
