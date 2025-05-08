@@ -20,7 +20,7 @@ Use folowing keystrokes to verify OpenGL functionalities & manage power operatio
 | --- | --- |
 | ALT+CTRL+K | Launch `glxgears` |
 | ALT+CTRL+L | Kill `glxgears` |
-| ALT+CTRL+M | Launch `glxinfo` in a `xterm` window |
-| ALT+CTRL+L | Kill `glxinfo` and `xterm` |
+| ALT+CTRL+G | Launch `glxinfo` in a `xterm` window |
+| ALT+CTRL+H | Kill `glxinfo` and `xterm` |
 | ALT+CTRL+U | System shutdown  |
 | ALT+CTRL+R | System reboot |

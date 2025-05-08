@@ -2,6 +2,9 @@
 
 This installation is based on **Debian 12** installed from ISO [https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.10.0-amd64-netinst.iso](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.10.0-amd64-netinst.iso) Wihtout GUI and as a base system.
 
+
+Traget hardware will be `Intel J4125` with `UHD 600 Graphics`
+
 Here,
 1. only **tty1** is activated with auto logged user **user**.
 2. **user** will be automatically logged to tty1 and *x* will be started 
@@ -20,7 +23,8 @@ apt install -y chromium openbox xbindkeys xdotool unclutter xorg xinit evtest py
  debian-installer debian-installer-launcher cdebconf chrony overlayroot xvfb \
  git make gcc libevdev-dev \
  xdotool wmctrl \
- mesa-utils mesa-utils-extra libgl1-mesa-dri libgl1-mesa-glx libglu1-mesa
+ mesa-utils mesa-utils-extra libgl1-mesa-dri libgl1-mesa-glx libglu1-mesa \
+ firmware-misc-nonfree
 ```
 
 Remova packages using,
@@ -67,9 +71,9 @@ Configure GRUB to restrict TTY access to tty1
 ```bash
 GRUB_FILE="/etc/default/grub"
 if grep -q "GRUB_CMDLINE_LINUX_DEFAULT" "$GRUB_FILE"; then
-    sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="quiet vconsole.keymap=us no_console_suspend console=tty1"/' "$GRUB_FILE"
+    sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="quiet vconsole.keymap=us no_console_suspend console=tty1 i915.enable_psr=0 i915.enable_fbc=0"/' "$GRUB_FILE"
 else
-    echo 'GRUB_CMDLINE_LINUX_DEFAULT="quiet vconsole.keymap=us no_console_suspend console=tty1"' >> "$GRUB_FILE"
+    echo 'GRUB_CMDLINE_LINUX_DEFAULT="quiet vconsole.keymap=us no_console_suspend console=tty1 i915.enable_psr=0 i915.enable_fbc=0"' >> "$GRUB_FILE"
 fi
 ```
 
@@ -114,12 +118,54 @@ update-grub
 Disable kernel modules for KVM using,
 ```bash
 echo -e "blacklist kvm\nblacklist kvm_intel\nblacklist kvm_amd" | sudo tee /etc/modprobe.d/disable-amt-virt.conf ;
+
+echo "i915" >> /etc/initramfs-tools/modules ;
+
 sudo update-initramfs -u ;
 ```
 
 
 ## X and Openbox
 Xorg and openbox configurations as follows.
+
+### Enforce to use Intel Graphics
+Enforce to use Intel Graphics by Xorg using `modesetting` driver
+```bash
+# Create directory
+sudo mkdir -p /etc/X11/xorg.conf.d
+# Creating Intel Xorg configuration
+sudo tee /etc/X11/xorg.conf.d/10-lvds.conf > /dev/null <<EOF
+Section "Device"
+    Identifier     "Intel Graphics"
+    Driver         "modesetting"
+EndSection
+EOF
+
+# Creating Intel Xorg configuration
+#sudo tee /etc/X11/xorg.conf.d/10-lvds.conf > /dev/null <<EOF
+#Section "Monitor"
+#    Identifier     "LVDS1"
+#    Modeline       "1920x1080_60.00"  173.00  1920 2048 2248 2576  1080 1083 1088 1120 -hsync +vsync
+#    Option         "PreferredMode" "1920x1080_60.00"
+#EndSection
+
+#Section "Device"
+#    Identifier     "Intel Graphics"
+#    Driver         "modesetting"
+#EndSection
+
+#Section "Screen"
+#    Identifier     "Screen0"
+#   Device         "Intel Graphics"
+#   Monitor        "LVDS1"
+#    DefaultDepth   24
+#    SubSection     "Display"
+#        Depth      24
+#        Modes      "1920x1080_60.00"
+#    EndSubSection
+#EndSection
+EOF
+```
 
 ### Enable auto login 
 Enable auto login to user **user** on **tty1** using,
@@ -188,8 +234,8 @@ w = w
 [control+alt]
 l = command(/usr/bin/pkill glxgears)
 k = command(sudo -u user DISPLAY=:0 /usr/bin/glxgears -fullscreen -info &)
-n = command(/usr/bin/pkill xterm)
-m = command(sudo -u user DISPLAY=:0 xterm -e "/usr/bin/glxinfo | more" &)
+h = command(/usr/bin/pkill xterm)
+g = command(sudo -u user DISPLAY=:0 /usr/bin/xterm -e "/usr/bin/glxinfo | more" &)
 r = command(init 6)
 u = command(init 0)
 
@@ -213,8 +259,8 @@ Following are the OpenGL functionality verification & manage power operations ke
 | --- | --- |
 | ALT+CTRL+K | Launch `glxgears` |
 | ALT+CTRL+L | Kill `glxgears` |
-| ALT+CTRL+M | Launch `glxinfo` in a `xterm` window |
-| ALT+CTRL+L | Kill `glxinfo` and `xterm` |
+| ALT+CTRL+G | Launch `glxinfo` in a `xterm` window |
+| ALT+CTRL+H | Kill `glxinfo` and `xterm` |
 | ALT+CTRL+U | System shutdown  |
 | ALT+CTRL+R | System reboot |
 
@@ -329,7 +375,7 @@ while true; do
 done
 
 # Apply
-/usr/local/bin/marineos_displayconfig
+# /usr/local/bin/marineos_displayconfig
 
 # Start opencpn
 opencpn --fullscreen &
